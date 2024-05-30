@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Neural Network Digit Recognition</title>
+    </head>
+    <body>
+        <h1>Neural Network Digit Recognition</h1>
+        <form method="post" action="/predict">
+        <button type="submit">Predict Random Digit</button>
+    </form>
+    {% if result %}
+    <div id="result">
+        <p>True Label: {{ result.true_label }}</p>
+        <p>Predicted Class: {{ result.predicted_class }}</p>
+    </div>
+    {% endif %}
+    </body>
+</html>
