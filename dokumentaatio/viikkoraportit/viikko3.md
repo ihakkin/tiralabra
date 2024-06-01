@@ -1,0 +1,8 @@
+ke: Testeihin tutustumista ja koodin yleistä parantelua. Luin optimoinnista ja yritin parantaa neuroverkon tarkkuutta. 3h
+to: Optimointia, alustava versio käyttöliittymästä, testiympäristön pystytys ja testeihin perehtymistä 8h
+pe: Testien suunnittelua, ensimmäisten testien toteutus 6h
+la: Testejä ja dokumentaation kirjoitusta 6h
+
+Yritän saada lisää testejä vielä toteutettua ennen testiopetusta. Tuntuu että järkeviä yksikkötestejä ei neuroverkon kohdalla samalla tavalla ole. Yksittäiset aktivaatiofunktiot voi testata yksikkötesteillä. Niitä en ole vielä toteuttanut. Tällä hetkellä koodissani on enemmän aktivaatiofunktioita, kuin mitä käytän neuroverkossani, sillä halusin käyttää niitä testailuvaiheessa. Vektorien ja matriisien dimensioita voisi testata eri vaiheissa.
+
+Luin materiaaliin linkatun "Writing automated  tests for neural networks" -artikkelin ja olen sen pohjalta suunnitellut testejä. Testaan että painot ja biasit muuttuvat treenauksessa joka kerroksessa. Yritän testata ylisovittamista (saako verkon ylisovittumaan pienellä datasetillä), mutta se on ongelmallista, koska en laske training lossia neuroverkossani. Sen laskeminen testien yhteydessä ei varmaankaan ole tarkoituksenmukaista, sillä jos sen laskee väärin, niin testillä ei ole mitään merkitystä. Pohdin pitäisikö sen laskeminen tapahtua neuroverkossa. Mietin että kuinka lähelle nollaa training lossin pitää mennä, jotta tietää että ylisovittuminen on tapahtunut. Testit vaativat vielä paljon pohdintaa.
