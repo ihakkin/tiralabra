@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+#np.random.seed(10)
 
 def relu(z):
     return np.maximum(z, 0)
@@ -54,12 +55,12 @@ class NeuralNetwork:
         # Output layer
         delta2 = a2 - one_hot_y
         nabla_w2 = (np.dot(delta2, a1.T) + self.lambd * self.w2) / m
-        nabla_b2 = np.sum(delta2, axis=1, keepdims=True) / m
+        nabla_b2 = np.sum(delta2) / m
 
         # Hidden layer
         delta1 = np.dot(self.w2.T, delta2) * relu_prime(z1)
         nabla_w1 = (np.dot(delta1, x_train.T) + self.lambd * self.w1) / m
-        nabla_b1 = np.sum(delta1, axis=1, keepdims=True) / m
+        nabla_b1 = np.sum(delta1) / m
 
         # Update parameters
         self.w1 -= learning_rate * nabla_w1
@@ -83,8 +84,8 @@ class NeuralNetwork:
         return accuracy
 
 if __name__ == "__main__":
-    train_data = pd.read_csv('/home/ihakkine/koulu/nn/data/mnist_train.csv')
-    test_data = pd.read_csv('/home/ihakkine/koulu/nn/data/mnist_test.csv')
+    train_data = pd.read_csv('../data/mnist_train.csv')
+    test_data = pd.read_csv('../data/mnist_test.csv')
 
     x_train = (train_data.iloc[:, 1:].values / 255).T
     y_train = train_data.iloc[:, 0].values
@@ -98,7 +99,7 @@ if __name__ == "__main__":
     input_size = x_train.shape[0]
     hidden_size = 30
     output_size = 10
-    learning_rate = 0.4
+    learning_rate = 0.5
     epochs = 100
     lambd = 0.01  
 
