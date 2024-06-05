@@ -6,7 +6,7 @@ def relu(z):
     return np.maximum(z, 0)
 
 def relu_prime(z):
-    return z > 0
+    return 1*(z > 0)
 
 def softmax(z):
     exp = np.exp(z - np.max(z))
@@ -18,6 +18,12 @@ def sigmoid(z):
 def sigmoid_prime(z):
     return sigmoid(z) * (1 - sigmoid(z))
 
+def leakyrelu(z):
+    return np.maximum(0.01 * z, z)
+
+def leakyrelu_deriv(z, alpha=0.01):
+    return np.where(z > 0, 1, alpha)
+
 class NeuralNetwork:
     def __init__(self, input_size, hidden_size, output_size):
         self.w1 = np.random.randn(hidden_size, input_size) * 0.1
@@ -27,7 +33,7 @@ class NeuralNetwork:
 
     def forward_propagation(self, x):
         z1 = np.dot(self.w1, x) + self.b1
-        a1 = relu(z1)
+        a1 = sigmoid(z1)
         z2 = np.dot(self.w2, a1) + self.b2
         a2 = softmax(z2)
         return z1, a1, z2, a2
@@ -40,7 +46,7 @@ class NeuralNetwork:
         nabla_w2 = np.dot(delta2, a1.T) / m
         nabla_b2 = np.sum(delta2, axis=1, keepdims=True) / m
 
-        delta1 = np.dot(self.w2.T, delta2) * relu_prime(z1)
+        delta1 = np.dot(self.w2.T, delta2) * sigmoid_prime(z1)
         nabla_w1 = np.dot(delta1, x_batch.T) / m
         nabla_b1 = np.sum(delta1, axis=1, keepdims=True) / m
 
