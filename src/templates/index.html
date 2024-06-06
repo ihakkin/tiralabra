@@ -1,19 +1,19 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <title>Neural Network Digit Recognition</title>
-    </head>
-    <body>
-        <h1>Neural Network Digit Recognition</h1>
-        <form method="post" action="/predict">
-        <button type="submit">Predict random digit</button>
-    </form>
+<head>
+    <meta charset="UTF-8">
+    <title>Neural network digit recognition</title>
+</head>
+<body>
+    <h1>Neural network digit recognition</h1>
+    <p>Current model accuracy with test data: {{ test_accuracy }}%</p>
     {% if result %}
-    <div id="result">
+        <img src="{{ image_path }}" alt="MNIST Image">
         <p>Label: {{ result.true_label }}</p>
         <p>Prediction: {{ result.predicted_class }}</p>
-    </div>
     {% endif %}
-    </body>
+    <form action="/predict" method="post">
+        <button type="submit">Predict</button>
+    </form>
+</body>
 </html>

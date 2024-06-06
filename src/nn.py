@@ -21,7 +21,7 @@ def sigmoid_prime(z):
 def leakyrelu(z):
     return np.maximum(0.01 * z, z)
 
-def leakyrelu_deriv(z, alpha=0.01):
+def leakyrelu_prime(z, alpha=0.01):
     return np.where(z > 0, 1, alpha)
 
 class NeuralNetwork:
@@ -30,6 +30,7 @@ class NeuralNetwork:
         self.b1 = np.random.randn(hidden_size, 1) * 0.1
         self.w2 = np.random.randn(output_size, hidden_size) * 0.1
         self.b2 = np.random.randn(output_size, 1) * 0.1
+        self.test_accuracy = None 
 
     def forward_propagation(self, x):
         z1 = np.dot(self.w1, x) + self.b1
@@ -74,8 +75,8 @@ class NeuralNetwork:
         predictions = np.argmax(a2, axis=0)
         return np.mean(predictions == y_test)
 
-    def save_parameters(self, filename):
-        np.savez(filename, w1=self.w1, b1=self.b1, w2=self.w2, b2=self.b2)
+    def save_parameters(self, filename, test_accuracy):
+        np.savez(filename, w1=self.w1, b1=self.b1, w2=self.w2, b2=self.b2, test_accuracy=test_accuracy)
 
     def load_parameters(self, filename):
         data = np.load(filename)
@@ -83,6 +84,7 @@ class NeuralNetwork:
         self.b1 = data['b1']
         self.w2 = data['w2']
         self.b2 = data['b2']
+        self.test_accuracy = data['test_accuracy']
 
 def preprocess_data(train_file, test_file):
     train_data = pd.read_csv(train_file)
@@ -95,7 +97,6 @@ def preprocess_data(train_file, test_file):
     y_test = test_data.iloc[:, 0].values
 
     return x_train, y_train, x_test, y_test
-
 
 if __name__ == "__main__":
     x_train, y_train, x_test, y_test = preprocess_data('../data/mnist_train.csv', '../data/mnist_test.csv')
@@ -111,10 +112,8 @@ if __name__ == "__main__":
     nn = NeuralNetwork(input_size, hidden_size, output_size)
     
     nn.train(x_train, y_train, x_test, y_test, learning_rate, epochs, batch_size, num_classes)
-     
-    nn.save_parameters('nn_parameters.npz')
-
-    nn.load_parameters('nn_parameters.npz')
 
     test_accuracy = nn.evaluate(x_test, y_test)
-    print(f"Test Accuracy after loading parameters: {test_accuracy:.4f}")
+    print(f"Test Accuracy: {test_accuracy:.4f}")
+    
+    nn.save_parameters('nn_parameters.npz', test_accuracy)

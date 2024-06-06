@@ -2,12 +2,17 @@ from flask import Flask, render_template, request
 import numpy as np
 import pandas as pd
 import random
+import os
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 from nn import NeuralNetwork
 
 app = Flask(__name__, template_folder='templates')
 nn = NeuralNetwork(input_size=784, hidden_size=30, output_size=10)
 
 nn.load_parameters('../src/nn_parameters.npz')
+test_accuracy = nn.test_accuracy *100
 
 def load_data(sample_size=1000):
     test_data = pd.read_csv('../data/mnist_test.csv') 
@@ -18,9 +23,16 @@ def load_data(sample_size=1000):
 
 x_test, y_test = load_data(sample_size=1000)
 
+def save_mnist_image(image_array, image_path):
+    plt.figure(figsize=(2,2))
+    plt.imshow(image_array.reshape(28, 28), cmap='gray')
+    plt.axis('off')
+    plt.savefig(image_path, bbox_inches='tight', pad_inches=0)
+    plt.close()
+
 @app.route('/', methods=['GET'])
 def index():
-    return render_template('index.html', result=None)
+    return render_template('index.html', result=None, test_accuracy=test_accuracy)
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -30,7 +42,12 @@ def predict():
     predicted_class = np.argmax(prediction, axis=0)
     true_label = y_test[index]
     result = {'true_label': int(true_label), 'predicted_class': int(predicted_class[0])}
-    return render_template('index.html', result=result)
+    image_path = 'static/mnist_image.png'
+    save_mnist_image(input_image, image_path)
+    
+    return render_template('index.html', result=result, test_accuracy=test_accuracy, image_path=image_path)
 
 if __name__ == "__main__":
+    if not os.path.exists('static'):
+        os.makedirs('static')
     app.run(debug=True)
