@@ -1,68 +1,98 @@
 import unittest
 import pandas as pd
 import numpy as np
-from src.nn import NeuralNetwork, one_hot
-
+from pathlib import Path
+from src.nn import NeuralNetwork, preprocess_data
 
 
 class TestNeuralNetwork(unittest.TestCase):
     def setUp(self):
         self.input_size = 784
-        self.hidden_size = 10
+        self.hidden_size = 30
         self.output_size = 10
         self.learning_rate = 0.1
-        self.epochs = 1000
-        self.lambd = 0.01
+        self.epochs = 200
+        self.num_classes = 10
 
-        self.nn = NeuralNetwork(self.input_size, self.hidden_size, self.output_size, lambd=self.lambd)
+        self.nn = NeuralNetwork(self.input_size, self.hidden_size, self.output_size)
 
-        train_data = pd.read_csv('/home/ihakkine/koulu/nn/data/mnist_train.csv')
+        script_dir = Path(__file__).resolve().parent
+        data_path = script_dir / '../../data/mnist_train.csv'
+
+        train_data = pd.read_csv(data_path)
         sample_data = train_data.sample(n=10, random_state=42)
         self.x_train = (sample_data.iloc[:, 1:].values / 255).T
         self.y_train = sample_data.iloc[:, 0].values
 
-
-    def compute_loss(self, a2, y):
-        m = y.shape[0]
-        one_hot_y = one_hot(y)
-        log_probs = -np.log(a2[one_hot_y == 1])
-        loss = np.sum(log_probs) / m
-        return loss
-
-
     def test_overfitting(self):
-        self.nn.train(self.x_train, self.y_train, self.x_train, self.y_train, self.learning_rate, self.epochs)
-        
-        _, _, _, a2 = self.nn.forward_propagation(self.x_train)
-        train_loss = self.compute_loss(a2, self.y_train)
+        self.nn.train(self.x_train, self.y_train, self.x_train, self.y_train, self.learning_rate, self.epochs, 10, self.num_classes) 
         train_accuracy = self.nn.evaluate(self.x_train, self.y_train)
-        print(f"Training accuracy: {train_accuracy}")
-        print(f"Training loss: {train_loss}")
-    
-        self.assertTrue(train_accuracy == 1.0 or train_loss < 1e-6)
-
+        self.assertTrue(train_accuracy == 1.0)
 
     def test_weight_changes(self):
         initial_w1 = self.nn.w1.copy()
         initial_w2 = self.nn.w2.copy()
-
-        self.nn.train(self.x_train, self.y_train, self.x_train, self.y_train, self.learning_rate, epochs=1)
-
-        print("Delta w1:", self.nn.w1 - initial_w1)
-        print("Delta w2:", self.nn.w2 - initial_w2)
-
+        self.nn.train(self.x_train, self.y_train, self.x_train, self.y_train, self.learning_rate, epochs=1, batch_size=10, num_classes=self.num_classes)
         self.assertTrue(np.any(self.nn.w1 - initial_w1 != 0))
         self.assertTrue(np.any(self.nn.w2 - initial_w2 != 0))
-   
 
     def test_bias_changes(self):
         initial_b1 = self.nn.b1.copy()
         initial_b2 = self.nn.b2.copy()
-
-        self.nn.train(self.x_train, self.y_train, self.x_train, self.y_train, self.learning_rate, epochs=1) 
-
-        print("Delta b1:", self.nn.b1 - initial_b1)
-        print("Delta b2:", self.nn.b2 - initial_b2)
-
+        self.nn.train(self.x_train, self.y_train, self.x_train, self.y_train, self.learning_rate, epochs=1, batch_size=10, num_classes=self.num_classes)
         self.assertTrue(np.any(self.nn.b1 - initial_b1 != 0))
         self.assertTrue(np.any(self.nn.b2 - initial_b2 != 0))
+
+    def test_shuffled_minibatch(self):
+        _, _, _, initial_output = self.nn.forward_propagation(self.x_train)
+        shuffled_indices = np.random.permutation(self.x_train.shape[1])
+        x_shuffled = self.x_train[:, shuffled_indices]
+        _, _, _, shuffled_output = self.nn.forward_propagation(x_shuffled)
+        for i in range(self.x_train.shape[1]):
+            initial_index = shuffled_indices[i]
+            self.assertTrue(np.allclose(shuffled_output[:, i], initial_output[:, initial_index], atol=1e-6))
+            
+    def test_invalid_input_shape(self):
+        invalid_input = np.random.randn(self.input_size + 1, 1)
+        self.assertRaises(ValueError, self.nn.forward_propagation, invalid_input)
+
+    def test_initialization(self):
+        self.assertEqual(self.nn.w1.shape, (self.hidden_size, self.input_size))
+        self.assertEqual(self.nn.b1.shape, (self.hidden_size, 1))
+        self.assertEqual(self.nn.w2.shape, (self.output_size, self.hidden_size))
+        self.assertEqual(self.nn.b2.shape, (self.output_size, 1))
+
+    def test_save_load_parameters(self):
+        self.nn.train(self.x_train, self.y_train, self.x_train, self.y_train, self.learning_rate, self.epochs, 10, self.num_classes)
+        self.nn.save_parameters('test_params.npz')
+        nn2 = NeuralNetwork(self.input_size, self.hidden_size, self.output_size)
+        nn2.load_parameters('test_params.npz')
+        self.assertTrue(np.array_equal(self.nn.w1, nn2.w1))
+        self.assertTrue(np.array_equal(self.nn.b1, nn2.b1))
+        self.assertTrue(np.array_equal(self.nn.w2, nn2.w2))
+        self.assertTrue(np.array_equal(self.nn.b2, nn2.b2))
+        self.assertEqual(self.nn.test_accuracy, nn2.test_accuracy)
+        Path('test_params.npz').unlink()
+
+    def test_load_parameters_file_not_found(self):
+        self.assertRaises(FileNotFoundError, self.nn.load_parameters, 'ghost.npz')
+    
+    def test_preprocess_data(self):
+        script_dir = Path(__file__).resolve().parent
+        train_data_path = script_dir / '../../data/mnist_train.csv'
+        test_data_path = script_dir / '../../data/mnist_test.csv'
+
+        x_train, y_train, x_test, y_test = preprocess_data(train_data_path, test_data_path)
+        self.assertEqual(x_train.shape[0], 784)
+        self.assertEqual(x_test.shape[0], 784)
+        self.assertEqual(len(y_train), x_train.shape[1])
+        self.assertEqual(len(y_test), x_test.shape[1])
+   
+    def test_softmax(self):
+        pass
+
+    def test_sigmoid(self):
+        pass
+
+    def test_sigmoid_prime(self):
+        pass
