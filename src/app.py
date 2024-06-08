@@ -12,7 +12,7 @@ app = Flask(__name__, template_folder='templates')
 nn = NeuralNetwork(input_size=784, hidden_size=30, output_size=10)
 
 nn.load_parameters('../src/nn_parameters.npz')
-test_accuracy = nn.test_accuracy *100
+test_accuracy = nn.test_accuracy * 100
 
 def load_data(sample_size=1000):
     test_data = pd.read_csv('../data/mnist_test.csv') 
@@ -32,7 +32,7 @@ def save_mnist_image(image_array, image_path):
 
 @app.route('/', methods=['GET'])
 def index():
-    return render_template('index.html', result=None, test_accuracy=test_accuracy)
+    return render_template('index.html', result=None, test_accuracy=f"{test_accuracy:.2f}")
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -45,7 +45,7 @@ def predict():
     image_path = 'static/mnist_image.png'
     save_mnist_image(input_image, image_path)
     
-    return render_template('index.html', result=result, test_accuracy=test_accuracy, image_path=image_path)
+    return render_template('index.html', result=result, test_accuracy=f"{test_accuracy:.2f}", image_path=image_path) 
 
 if __name__ == "__main__":
     if not os.path.exists('static'):
