@@ -12,9 +12,9 @@ class TestNeuralNetwork(unittest.TestCase):
         self.output_size = 10
         self.learning_rate = 0.1
         self.epochs = 200
-        self.num_classes = 10
+        self.batch_size = 10
 
-        self.nn = NeuralNetwork(self.input_size, self.hidden_size, self.output_size)
+        self.nn = NeuralNetwork(self.input_size, self.hidden_size, self.output_size, self.learning_rate, self.epochs, self.batch_size)
 
         script_dir = Path(__file__).resolve().parent
         data_path = script_dir / '../../data/mnist_train.csv'
@@ -25,21 +25,21 @@ class TestNeuralNetwork(unittest.TestCase):
         self.y_train = sample_data.iloc[:, 0].values
 
     def test_overfitting(self):
-        self.nn.train(self.x_train, self.y_train, self.x_train, self.y_train, self.learning_rate, self.epochs, 10, self.num_classes) 
+        self.nn.train(self.x_train, self.y_train, self.x_train, self.y_train) 
         train_accuracy = self.nn.evaluate(self.x_train, self.y_train)
         self.assertTrue(train_accuracy == 1.0)
 
     def test_weight_changes(self):
         initial_w1 = self.nn.w1.copy()
         initial_w2 = self.nn.w2.copy()
-        self.nn.train(self.x_train, self.y_train, self.x_train, self.y_train, self.learning_rate, epochs=1, batch_size=10, num_classes=self.num_classes)
+        self.nn.train(self.x_train, self.y_train, self.x_train, self.y_train)
         self.assertTrue(np.any(self.nn.w1 - initial_w1 != 0))
         self.assertTrue(np.any(self.nn.w2 - initial_w2 != 0))
 
     def test_bias_changes(self):
         initial_b1 = self.nn.b1.copy()
         initial_b2 = self.nn.b2.copy()
-        self.nn.train(self.x_train, self.y_train, self.x_train, self.y_train, self.learning_rate, epochs=1, batch_size=10, num_classes=self.num_classes)
+        self.nn.train(self.x_train, self.y_train, self.x_train, self.y_train)
         self.assertTrue(np.any(self.nn.b1 - initial_b1 != 0))
         self.assertTrue(np.any(self.nn.b2 - initial_b2 != 0))
 
@@ -63,9 +63,9 @@ class TestNeuralNetwork(unittest.TestCase):
         self.assertEqual(self.nn.b2.shape, (self.output_size, 1))
 
     def test_save_load_parameters(self):
-        self.nn.train(self.x_train, self.y_train, self.x_train, self.y_train, self.learning_rate, self.epochs, 10, self.num_classes)
+        self.nn.train(self.x_train, self.y_train, self.x_train, self.y_train)
         self.nn.save_parameters('test_params.npz')
-        nn2 = NeuralNetwork(self.input_size, self.hidden_size, self.output_size)
+        nn2 = NeuralNetwork(self.input_size, self.hidden_size, self.output_size, self.learning_rate, self.epochs, self.batch_size)
         nn2.load_parameters('test_params.npz')
         self.assertTrue(np.array_equal(self.nn.w1, nn2.w1))
         self.assertTrue(np.array_equal(self.nn.b1, nn2.b1))
@@ -87,6 +87,7 @@ class TestNeuralNetwork(unittest.TestCase):
         self.assertEqual(x_test.shape[0], 784)
         self.assertEqual(len(y_train), x_train.shape[1])
         self.assertEqual(len(y_test), x_test.shape[1])
+
    
     def test_softmax(self):
         pass

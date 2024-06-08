@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from nn import NeuralNetwork
 
 app = Flask(__name__, template_folder='templates')
-nn = NeuralNetwork(input_size=784, hidden_size=30, output_size=10)
+nn = NeuralNetwork(input_size=784, hidden_size=30, output_size=10, learning_rate=0.5, epochs=10, batch_size=32)
 
 nn.load_parameters('../src/nn_parameters.npz')
 test_accuracy = nn.test_accuracy * 100
