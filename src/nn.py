@@ -1,12 +1,7 @@
+import random
 import numpy as np
 import pandas as pd
-import random
 
-def relu(z):
-    return np.maximum(z, 0)
-
-def relu_prime(z):
-    return 1*(z > 0)
 
 def softmax(z):
     exp = np.exp(z - np.max(z))
@@ -18,14 +13,38 @@ def sigmoid(z):
 def sigmoid_prime(z):
     return sigmoid(z) * (1 - sigmoid(z))
 
-def leakyrelu(z):
-    return np.maximum(0.01 * z, z)
-
-def leakyrelu_prime(z, alpha=0.01):
-    return np.where(z > 0, 1, alpha)
 
 class NeuralNetwork:
+    """
+    Neuroverkko-luokka.
+
+    Attributes:
+        w1: array, jossa piilokerroksen painot
+        b1: array, jossa piilokerroksen biasit
+        w2: array, jossa ulostulokerroksen painot
+        b2: array, jossa ulostulokerroksen biasit
+        test_accuracy: testiaineiston tarkkuus (float tai None)
+
+    Methods:
+        forward_propagation: Suorittaa eteenpäin suuntautuvan laskennan
+        backward_propagation: Suorittaa vastavirta-algoritmin ja parametrien päivityksen.
+        train: Kouluttaa neuroverkon.
+        evaluate: Arvioi neuroverkon tarkkuuden
+        save_parameters: Tallentaa neuroverkon parametrit tiedostoon.
+        load_parameters: Lataa neuroverkon parametrit tiedostosta.
+    """
+
     def __init__(self, input_size, hidden_size, output_size):
+        """
+        Alustaa neuroverkon.
+
+        Args:
+            input_size: Syötekerroksen neuronien määrä.
+            hidden_size: Piilokerroksen neuronien määrä.
+            output_size: Ulostulokerroksen neuronien määrä.
+        """
+        # Alustetaan painot ja biasit satunnaisesti
+        # Skaalattu 0.1:llä vähentämään suurten lukujen vaikutusta
         self.w1 = np.random.randn(hidden_size, input_size) * 0.1
         self.b1 = np.random.randn(hidden_size, 1) * 0.1
         self.w2 = np.random.randn(output_size, hidden_size) * 0.1
@@ -33,6 +52,14 @@ class NeuralNetwork:
         self.test_accuracy = None 
 
     def forward_propagation(self, x):
+        """
+        Suorittaa eteenpäin suuntautuvan laskennan
+
+        Args:
+            x: Syöte arrayna
+
+        Returns:
+        """
         z1 = np.dot(self.w1, x) + self.b1
         a1 = sigmoid(z1)
         z2 = np.dot(self.w2, a1) + self.b2
@@ -40,17 +67,30 @@ class NeuralNetwork:
         return z1, a1, z2, a2
 
     def backward_propagation(self, x_batch, y_batch, a1, a2, z1, learning_rate, num_classes):
+        """
+        Vastavirta-algoritmi sekä painojen ja biasien päivitys.
+
+        Args:
+            x_batch: array, jonka jokainen sarake on yksi koulutusdatan sample. Pilkottu mini-batcheiksi koulutusdatasta.
+            y_batch: array, jonka arvot kertovat mikä luku kussakin mini-batchin samplessa on.
+            a1: Piilokerroksen aktivaatio
+            a2: Ulostulokerroksen aktivaatio, eli mallin ennustama arvo jota verrataan todelliseen arvoon.
+            z1: Piilokerroksen painotettu summa ennen aktivaatiofunktiota.
+            learning_rate: Oppimisnopeus. Vaikuttaa siihen kuinka suuria askelia otetaan gradientin vastavektorin suuntaan.
+            num_classes: Luokkien lukumäärä. Tässä luokittelutehtävässä 10, eli luvut 0-9.
+        """
         m = x_batch.shape[1]
         one_hot_y = np.eye(num_classes)[y_batch].T
 
-        delta2 = a2 - one_hot_y
-        nabla_w2 = np.dot(delta2, a1.T) / m
-        nabla_b2 = np.sum(delta2, axis=1, keepdims=True) / m
+        delta2 = a2 - one_hot_y # Virhe output-kerroksessa (cross entropy -virhefunktion gradientti)
+        nabla_w2 = np.dot(delta2, a1.T) / m # Output-kerroksen painojen gradientti
+        nabla_b2 = np.sum(delta2, axis=1, keepdims=True) / m # Output-kerroksen biasien gradientti
 
-        delta1 = np.dot(self.w2.T, delta2) * sigmoid_prime(z1)
-        nabla_w1 = np.dot(delta1, x_batch.T) / m
-        nabla_b1 = np.sum(delta1, axis=1, keepdims=True) / m
+        delta1 = np.dot(self.w2.T, delta2) * sigmoid_prime(z1) # Piilokerroksen virhe
+        nabla_w1 = np.dot(delta1, x_batch.T) / m # Piilokerroksen painojen gradientti
+        nabla_b1 = np.sum(delta1, axis=1, keepdims=True) / m # Piilokerroksen biasien gradientti
 
+        # Painojen ja biasien päivitys laskettujen gradienttien perusteella
         self.w1 -= learning_rate * nabla_w1
         self.b1 -= learning_rate * nabla_b1
         self.w2 -= learning_rate * nabla_w2
@@ -58,6 +98,19 @@ class NeuralNetwork:
 
     def train(self, x_train, y_train, x_test, y_test, learning_rate, epochs, batch_size, num_classes):
         training_data = list(zip(x_train.T, y_train))
+        """
+        Kouluttaa neuroverkon
+
+        Args:
+            x_train: array, jossa koko koulutusaineiston syötteet. Jokainen sarake vastaa yhtä samplea.
+            y_train: array, jossa koko koulutusaineiston todelliset arvot.
+            x_test: array, jossa testiaineiston syötteet. Jokainen sarake vastaa yhtä samplea.
+            y_test: array, jossa testiaineiston todelliset arvot.
+            learning_rate: Oppimisnopeus. Vaikuttaa siihen kuinka suuria askelia otetaan gradientin vastavektorin suuntaan.
+            epochs: Kuinka monta kertaa koulutusdata käydään läpi
+            batch_size: Minibatchien koko, eli kuinka monta samplea käsitellään kerrallaan.
+            num_classes: Luokkien lukumäärä. Tässä luokittelutehtävässä 10, eli luvut 0-9.
+        """
         for epoch in range(epochs):
             random.shuffle(training_data)
             mini_batches = [training_data[k:k + batch_size] for k in range(0, len(training_data), batch_size)]
@@ -67,18 +120,41 @@ class NeuralNetwork:
                 y_batch = np.array(y_batch)
                 z1, a1, z2, a2 = self.forward_propagation(x_batch)
                 self.backward_propagation(x_batch, y_batch, a1, a2, z1, learning_rate, num_classes)
-            test_accuracy = self.evaluate(x_test, y_test)
-            print(f"Epoch {epoch + 1}: Test accuracy {test_accuracy:.4f}")
+            self.test_accuracy = self.evaluate(x_test, y_test)
+            print(f"Epoch {epoch + 1}: Test accuracy {self.test_accuracy:.4f}")
 
     def evaluate(self, x_test, y_test):
+        """
+        Arvioi neuroverkon tarkkuuden testiaineistolla.
+
+        Args:
+            x_test: array, jossa testiaineiston syötteet. Jokainen sarake vastaa yhtä samplea.
+            y_test: array, jossa testiaineiston todelliset arvot.
+
+        Returns:
+            Testiaineiston tarkkuus.
+        """
         _, _, _, a2 = self.forward_propagation(x_test)
         predictions = np.argmax(a2, axis=0)
         return np.mean(predictions == y_test)
 
-    def save_parameters(self, filename, test_accuracy):
-        np.savez(filename, w1=self.w1, b1=self.b1, w2=self.w2, b2=self.b2, test_accuracy=test_accuracy)
+    def save_parameters(self, filename,):
+        """
+        Tallentaa neuroverkon painot, biasit ja testitarkkuuden tiedostoon käyttöliittymää varten
+
+        Args:
+            filename: Tiedoston nimi, johon parametrit tallennetaan.
+            test_accuracy: Testiaineiston tarkkuus
+        """
+        np.savez(filename, w1=self.w1, b1=self.b1, w2=self.w2, b2=self.b2, test_accuracy=self.test_accuracy)
 
     def load_parameters(self, filename):
+        """
+        Lataa neuroverkon painot, biasit ja testitarkkuuden tiedostosta käyttöliittymää varten
+
+        Args:
+            filename: Tiedoston nimi, josta parametrit ladataan.
+        """
         data = np.load(filename)
         self.w1 = data['w1']
         self.b1 = data['b1']
@@ -87,6 +163,16 @@ class NeuralNetwork:
         self.test_accuracy = data['test_accuracy']
 
 def preprocess_data(train_file, test_file):
+    """
+    Esikäsittelee koulutus- ja testigatan
+
+    Args:
+        train_file: Polku koulutusdatan tiedostoon.
+        test_file: Polku testiadatan tiedostoon.
+
+    Returns: 
+    """
+
     train_data = pd.read_csv(train_file)
     test_data = pd.read_csv(test_file)
 
@@ -114,6 +200,7 @@ if __name__ == "__main__":
     nn.train(x_train, y_train, x_test, y_test, learning_rate, epochs, batch_size, num_classes)
 
     test_accuracy = nn.evaluate(x_test, y_test)
-    print(f"Test Accuracy: {test_accuracy:.4f}")
     
-    nn.save_parameters('nn_parameters.npz', test_accuracy)
+    nn.save_parameters('nn_parameters.npz')
+    
+    print(f"Saved test accuracy: {test_accuracy:.4f}")
