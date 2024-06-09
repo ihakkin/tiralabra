@@ -3,16 +3,63 @@ import numpy as np
 import pandas as pd
 
 def softmax(z):
+    """
+    Output-kerroksen aktivaatiofunktio. Antaa jokaiselle ennustettavalle luokalle
+    arvon väliltä [0, 1]. Suurimman arvon saama luokka on neuroverkon ennuste syötteen arvoksi.
+
+    Args:
+        z: Array, jolle softmax lasketaan. Neuronin output ennen aktivaatiota.
+
+    Returns:
+        Array, jossa laskettu output-kerroksen aktivaatiot. Luokkien todennäköisyysjakauma.
+    """
     exp = np.exp(z - np.max(z))
     return exp / exp.sum(axis=0)
 
 def sigmoid(z):
+    """
+    Piilokerroksen aktivaatiofunktio.
+
+    Args:
+        z: Array, jolle sigmoid lasketaan
+
+    Returns:
+        Array, jossa laskettu piilokerroksen aktivaatiot.
+    """
     return 1.0 / (1.0 + np.exp(-z))
 
 def sigmoid_prime(z):
+    """
+    Sigmoid-funktion derivaatta. Käytetään vastavirta-algoritmissa.
+
+    Args:
+        z: Array, jolle sigmoid-derivaatta lasketaan
+
+    Returns:
+        Sigmoid-funktion derivaatan arvo
+    """
     return sigmoid(z) * (1 - sigmoid(z))
 
 class NeuralNetwork:
+    """
+    Neuroverkko-luokka.
+
+    Attributes:
+        w1: array, jossa piilokerroksen painot
+        b1: array, jossa piilokerroksen biasit
+        w2: array, jossa ulostulokerroksen painot
+        b2: array, jossa ulostulokerroksen biasit
+        test_accuracy: testiaineiston tarkkuus (float tai None)
+
+    Methods:
+        forward_propagation: Suorittaa eteenpäin suuntautuvan laskennan
+        backward_propagation: Suorittaa vastavirta-algoritmin ja parametrien päivityksen.
+        train: Kouluttaa neuroverkon.
+        evaluate: Arvioi neuroverkon tarkkuuden
+        save_parameters: Tallentaa neuroverkon parametrit tiedostoon.
+        load_parameters: Lataa neuroverkon parametrit tiedostosta.
+    """
+
     def __init__(self, input_size, hidden_size, output_size, learning_rate, epochs, batch_size):
         """
         Alustaa neuroverkon.
@@ -48,22 +95,23 @@ class NeuralNetwork:
             x: Syöte arrayna
 
         Returns:
+            z1, a1, a2: Piilokerroksen ja output-kerroksen painotetut summat ja aktivaatiofunktiot.
         """
         z1 = np.dot(self.w1, x) + self.b1
         a1 = sigmoid(z1)
         z2 = np.dot(self.w2, a1) + self.b2
         a2 = softmax(z2)
-        return z1, a1, z2, a2
+        return z1, a1, a2
 
     def backward_propagation(self, x_batch, y_batch, a1, a2, z1):
         """
         Vastavirta-algoritmi sekä painojen ja biasien päivitys.
 
         Args:
-            x_batch: array, jonka jokainen sarake on yksi koulutusdatan sample. Pilkottu mini-batcheiksi koulutusdatasta.
+            x_batch: array, jonka jokainen sarake on yksi koulutusdatan sample. Pilkottu mini-batcheiksi.
             y_batch: array, jonka arvot kertovat mikä luku kussakin mini-batchin samplessa on.
             a1: Piilokerroksen aktivaatio
-            a2: Ulostulokerroksen aktivaatio, eli mallin ennustama arvo jota verrataan todelliseen arvoon.
+            a2: Output-kerroksen aktivaatio, eli mallin ennustama arvo, jota verrataan todelliseen arvoon.
             z1: Piilokerroksen painotettu summa ennen aktivaatiofunktiota.
         """
         m = x_batch.shape[1]
@@ -88,8 +136,8 @@ class NeuralNetwork:
         Kouluttaa neuroverkon
 
         Args:
-            x_train: array, jossa koko koulutusaineiston syötteet. Jokainen sarake vastaa yhtä samplea.
-            y_train: array, jossa koko koulutusaineiston todelliset arvot.
+            x_train: array, jossa koko koulutusdatan syötteet. Jokainen sarake vastaa yhtä samplea.
+            y_train: array, jossa koko koulutusdatan todelliset arvot.
             x_test: array, jossa testiaineiston syötteet. Jokainen sarake vastaa yhtä samplea.
             y_test: array, jossa testiaineiston todelliset arvot.
         """
@@ -101,7 +149,7 @@ class NeuralNetwork:
                 x_batch, y_batch = zip(*mini_batch)
                 x_batch = np.array(x_batch).T
                 y_batch = np.array(y_batch)
-                z1, a1, z2, a2 = self.forward_propagation(x_batch)
+                z1, a1, a2 = self.forward_propagation(x_batch)
                 self.backward_propagation(x_batch, y_batch, a1, a2, z1)
             self.test_accuracy = self.evaluate(x_test, y_test)
             print(f"Epoch {epoch + 1}: Test accuracy {self.test_accuracy:.4f}")
@@ -117,7 +165,7 @@ class NeuralNetwork:
         Returns:
             Testiaineiston tarkkuus.
         """
-        _, _, _, a2 = self.forward_propagation(x_test)
+        _, _, a2 = self.forward_propagation(x_test)
         predictions = np.argmax(a2, axis=0)
         return np.mean(predictions == y_test)
 

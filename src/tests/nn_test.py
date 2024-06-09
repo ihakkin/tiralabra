@@ -2,7 +2,7 @@ import unittest
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from src.nn import NeuralNetwork, preprocess_data
+from src.nn import NeuralNetwork, preprocess_data, softmax, sigmoid, sigmoid_prime
 
 
 class TestNeuralNetwork(unittest.TestCase):
@@ -11,7 +11,7 @@ class TestNeuralNetwork(unittest.TestCase):
         self.hidden_size = 30
         self.output_size = 10
         self.learning_rate = 0.1
-        self.epochs = 200
+        self.epochs = 100
         self.batch_size = 10
 
         self.nn = NeuralNetwork(self.input_size, self.hidden_size, self.output_size, self.learning_rate, self.epochs, self.batch_size)
@@ -44,10 +44,10 @@ class TestNeuralNetwork(unittest.TestCase):
         self.assertTrue(np.any(self.nn.b2 - initial_b2 != 0))
 
     def test_shuffled_minibatch(self):
-        _, _, _, initial_output = self.nn.forward_propagation(self.x_train)
+        _, _, initial_output = self.nn.forward_propagation(self.x_train)
         shuffled_indices = np.random.permutation(self.x_train.shape[1])
         x_shuffled = self.x_train[:, shuffled_indices]
-        _, _, _, shuffled_output = self.nn.forward_propagation(x_shuffled)
+        _, _, shuffled_output = self.nn.forward_propagation(x_shuffled)
         for i in range(self.x_train.shape[1]):
             initial_index = shuffled_indices[i]
             self.assertTrue(np.allclose(shuffled_output[:, i], initial_output[:, initial_index], atol=1e-6))
@@ -57,10 +57,17 @@ class TestNeuralNetwork(unittest.TestCase):
         self.assertRaises(ValueError, self.nn.forward_propagation, invalid_input)
 
     def test_initialization(self):
+        self.assertEqual(self.nn.input_size, self.input_size)
+        self.assertEqual(self.nn.hidden_size, self.hidden_size)
+        self.assertEqual(self.nn.output_size, self.output_size)
+        self.assertEqual(self.nn.learning_rate, self.learning_rate)
+        self.assertEqual(self.nn.epochs, self.epochs)
+        self.assertEqual(self.nn.batch_size, self.batch_size)
         self.assertEqual(self.nn.w1.shape, (self.hidden_size, self.input_size))
         self.assertEqual(self.nn.b1.shape, (self.hidden_size, 1))
         self.assertEqual(self.nn.w2.shape, (self.output_size, self.hidden_size))
         self.assertEqual(self.nn.b2.shape, (self.output_size, 1))
+        self.assertIsNone(self.nn.test_accuracy)
 
     def test_save_load_parameters(self):
         self.nn.train(self.x_train, self.y_train, self.x_train, self.y_train)
@@ -90,10 +97,18 @@ class TestNeuralNetwork(unittest.TestCase):
 
    
     def test_softmax(self):
-        pass
+        z = np.array([1, 2, 3])
+        result = softmax(z)
+        self.assertTrue(np.allclose(result, np.exp(z) / np.sum(np.exp(z))))
 
     def test_sigmoid(self):
-        pass
+        z = np.array([0, 2, -2])
+        result = sigmoid(z)
+        expected = 1 / (1 + np.exp(-z))
+        self.assertTrue(np.allclose(result, expected))
 
     def test_sigmoid_prime(self):
-        pass
+        z = np.array([0, 2, -2])
+        result = sigmoid_prime(z)
+        expected = sigmoid(z) * (1 - sigmoid(z))
+        self.assertTrue(np.allclose(result, expected))
