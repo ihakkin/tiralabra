@@ -38,7 +38,7 @@ def index():
 def predict():
     index = random.randint(0, x_test.shape[1] - 1)
     input_image = x_test[:, index].reshape(784, 1)
-    _, _, _, prediction = nn.forward_propagation(input_image)
+    _, _, prediction = nn.forward_propagation(input_image)
     predicted_class = np.argmax(prediction, axis=0)
     true_label = y_test[index]
     result = {'true_label': int(true_label), 'predicted_class': int(predicted_class[0])}
