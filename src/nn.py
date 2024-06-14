@@ -79,8 +79,8 @@ class NeuralNetwork:
         self.epochs = epochs
         self.batch_size = batch_size
 
-        # Alustetaan painot ja biasit satunnaisesti
-        # Skaalattu 0.1:llä vähentämään suurten lukujen vaikutusta
+        # Alustetaan painot ja biasit satunnaisesti normaalijakauman arvoilla (keskiarvo 0, keskihajonta 1)
+        # Arvot skaalattu 0.1:llä, mikä vähentää suurten lukujen vaikutusta ja vakauttaa oppimista
         self.w1 = np.random.randn(self.hidden_size, self.input_size) * 0.1
         self.b1 = np.random.randn(self.hidden_size, 1) * 0.1
         self.w2 = np.random.randn(self.output_size, self.hidden_size) * 0.1
@@ -89,7 +89,7 @@ class NeuralNetwork:
 
     def forward_propagation(self, x):
         """
-        Suorittaa eteenpäin suuntautuvan laskennan
+        Suorittaa eteenpäin suuntautuvan laskennan. Edeltävän kerroksen output on seuraavan kerroksen input.
 
         Args:
             x: Syöte arrayna
@@ -97,9 +97,14 @@ class NeuralNetwork:
         Returns:
             z1, a1, a2: Piilokerroksen ja output-kerroksen painotetut summat ja aktivaatiofunktiot.
         """
-        z1 = np.dot(self.w1, x) + self.b1
+        # Piilokerroksen painomatriisin ja syötteen välinen pistetulo, johon lisätään piilokerroksen bias.
+        z1 = np.dot(self.w1, x) + self.b1 
+        # Lasketaan aktivaatiofunktio piilokerroksen neuroneille.
         a1 = sigmoid(z1)
+        # Ulostulokerroksen painomatriisin ja piilokerroksen outputin välinen pistetulo,
+        # johon lisätään ulostulokerroksen bias.
         z2 = np.dot(self.w2, a1) + self.b2
+        # Lasketaan aktivaatiofunktio ulostulokerroksen neuroneille.
         a2 = softmax(z2)
         return z1, a1, a2
 
@@ -115,6 +120,7 @@ class NeuralNetwork:
             z1: Piilokerroksen painotettu summa ennen aktivaatiofunktiota.
         """
         m = x_batch.shape[1]
+        # Muutetaan y_batch one hot -vektoriksi, jossa luokat esitetään binaarisena.
         one_hot_y = np.eye(self.output_size)[y_batch].T
 
         delta2 = a2 - one_hot_y # Virhe output-kerroksessa (cross entropy -virhefunktion gradientti)
