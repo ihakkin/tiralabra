@@ -19,7 +19,7 @@ def softmax(z):
 def sigmoid(z):
     """
     Piilokerroksen aktivaatiofunktio.
-
+ 
     Args:
         z: Array, jolle sigmoid lasketaan
 
@@ -68,7 +68,7 @@ class NeuralNetwork:
             input_size: Syötekerroksen neuronien määrä.
             hidden_size: Piilokerroksen neuronien määrä.
             output_size: Output-kerroksen neuronien määrä.
-            learning_rate: Oppimisnopeus.  Oppimisnopeus. Vaikuttaa siihen kuinka suuria askelia otetaan gradientin vastavektorin suuntaan.
+            learning_rate: Oppimisnopeus. Vaikuttaa siihen kuinka suuria askelia otetaan gradientin vastavektorin suuntaan.
             epochs: Kuinka monta kertaa koulutusdata käydään läpi
             batch_size: Minibatchien koko,  eli kuinka monta samplea käsitellään kerrallaan.
         """
@@ -98,7 +98,7 @@ class NeuralNetwork:
             z1, a1, a2: Piilokerroksen ja output-kerroksen painotetut summat ja aktivaatiofunktiot.
         """
         # Piilokerroksen painomatriisin ja syötteen välinen pistetulo, johon lisätään piilokerroksen bias.
-        z1 = np.dot(self.w1, x) + self.b1 
+        z1 = np.dot(self.w1, x) + self.b1
         # Lasketaan aktivaatiofunktio piilokerroksen neuroneille.
         a1 = sigmoid(z1)
         # Ulostulokerroksen painomatriisin ja piilokerroksen outputin välinen pistetulo,
@@ -120,7 +120,7 @@ class NeuralNetwork:
             z1: Piilokerroksen painotettu summa ennen aktivaatiofunktiota.
         """
         m = x_batch.shape[1]
-        # Muutetaan y_batch one hot -vektoriksi, jossa luokat esitetään binaarisena.
+        # Muutetaan y_batch one hot -muotoon, jossa luokat esitetään binaarisena.
         one_hot_y = np.eye(self.output_size)[y_batch].T
 
         delta2 = a2 - one_hot_y # Virhe output-kerroksessa (cross entropy -virhefunktion gradientti)
