@@ -18,7 +18,7 @@ def load_data(sample_size=1000):
     test_data = pd.read_csv('../data/mnist_test.csv') 
     sampled_data = test_data.sample(n=sample_size)
     x_test = (sampled_data.iloc[:, 1:].values / 255).T
-    y_test = sampled_data.iloc[:, 0].values
+    y_test = sampled_data.iloc[:, 0].values 
     return x_test, y_test
 
 x_test, y_test = load_data(sample_size=1000)

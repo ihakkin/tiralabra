@@ -3,17 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <title>Neural network digit recognition</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            text-align: center;
+        }
+        img {
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        .result {
+            margin-top: 20px;
+        }
+        .correct {
+            color: green;
+        }
+        .incorrect {
+            color: red;
+        }
+        .test-accuracy {
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Neural network digit recognition</h1>
-    <p>Current model accuracy with test data: {{ test_accuracy }}%</p>
-    {% if result %}
-        <img src="{{ image_path }}" alt="MNIST Image">
-        <p>Label: {{ result.true_label }}</p>
-        <p>Prediction: {{ result.predicted_class }}</p>
-    {% endif %}
-    <form action="/predict" method="post">
-        <button type="submit">Predict random digit</button>
-    </form>
+    <div class="container">
+        <h1>Neural network digit recognition</h1>
+        <p class="test-accuracy">Current model accuracy with test data: {{ test_accuracy }}%</p>
+        {% if result %}
+            <img src="{{ image_path }}" alt="MNIST Image">
+            <div class="result">
+                <p>Label: {{ result.true_label }}</p>
+                <p class="{% if result.true_label == result.predicted_class %}correct{% else %}incorrect{% endif %}">
+                    Prediction: {{ result.predicted_class }}
+                </p>
+            </div>
+        {% endif %}
+        <form action="/predict" method="post">
+            <button type="submit">Predict random digit</button>
+        </form>
+    </div>
 </body>
 </html>
