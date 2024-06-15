@@ -13,7 +13,7 @@ mkdir data
 ```
 ### 2. Lataa MNIST-data 
 
-[lataa](https://www.kaggle.com/datasets/oddrationale/mnist-in-csv/data) mnist_train.csv ja mnist_test.csv kansioon tiralabra/data
+[lataa](https://www.dropbox.com/scl/fo/jzbrj0pikmnos8ww93pje/AKGDpmv7gVMBiRk6zgSR0A8?rlkey=nc55rx8s1ypfe8885i4yhks0l&st=2l4ytkz4&dl=0) mnist_train.csv ja mnist_test.csv kansioon tiralabra/data
 
 
 ### 3. Asenna poetry jos sitä ei vielä ole asennettu
