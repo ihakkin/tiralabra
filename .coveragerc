@@ -1,0 +1,10 @@
+[run]
+source = src/nn.py
+    
+[report]
+exclude_lines =
+    def main
+    if __name__ == .__main__.:
+    def softmax
+    def sigmoid
+    def sigmoid_prime
