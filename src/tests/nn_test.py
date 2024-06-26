@@ -93,11 +93,3 @@ class TestNeuralNetwork(unittest.TestCase):
         self.assertEqual(len(y_train), x_train.shape[1])
         self.assertEqual(len(y_test), x_test.shape[1])
 
-    def test_softmax(self):
-        pass
-
-    def test_sigmoid(self):
-        pass
-
-    def test_sigmoid_prime(self):
-        pass
