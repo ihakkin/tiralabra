@@ -44,10 +44,10 @@ class TestNeuralNetwork(unittest.TestCase):
         self.assertTrue(np.any(self.nn.parameters['b2'] - initial_b2 != 0))
 
     def test_shuffled_minibatch(self):
-        activations_initial = self.nn.forward_propagation(self.x_train)
+        activations_initial, _ = self.nn.forward_propagation(self.x_train)
         shuffled_indices = np.random.permutation(self.x_train.shape[1])
         x_shuffled = self.x_train[:, shuffled_indices]
-        activations_shuffled = self.nn.forward_propagation(x_shuffled)
+        activations_shuffled, _ = self.nn.forward_propagation(x_shuffled)
         for i in range(self.x_train.shape[1]):
             initial_index = shuffled_indices[i]
             self.assertTrue(np.allclose(activations_shuffled['a2'][:, i], activations_initial['a2'][:, initial_index], atol=1e-6))
@@ -92,4 +92,3 @@ class TestNeuralNetwork(unittest.TestCase):
         self.assertEqual(x_test.shape[0], 784)
         self.assertEqual(len(y_train), x_train.shape[1])
         self.assertEqual(len(y_test), x_test.shape[1])
-

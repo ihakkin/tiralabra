@@ -2,7 +2,6 @@
 Flask-sovellus, joka käyttää neuroverkkoa MNIST-numeroiden ennustamiseen.
 """
 
-
 import os
 import random
 import numpy as np
@@ -83,7 +82,7 @@ def predict():
     """
     random_index = random.randint(0, x_test_data.shape[1] - 1)
     input_image = x_test_data[:, random_index].reshape(784, 1)
-    activations = nn.forward_propagation(input_image)
+    activations, _ = nn.forward_propagation(input_image)
     predicted_class = np.argmax(activations['a2'], axis=0)
     true_label = y_test_data[random_index]
     result = {
