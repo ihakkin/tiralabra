@@ -2,6 +2,7 @@
 Flask-sovellus, joka käyttää neuroverkkoa MNIST-numeroiden ennustamiseen.
 """
 
+
 import os
 import random
 import numpy as np
@@ -14,11 +15,19 @@ from nn import NeuralNetwork
 matplotlib.use('Agg')
 
 app = Flask(__name__, template_folder='templates')
-nn = NeuralNetwork(
-    input_size=784, hidden_size=30, output_size=10,
-    learning_rate=0.5, epochs=10, batch_size=32
-)
 
+# Määrittele hyperparametrit
+hyperparameters = {
+    'hidden_size': 30,
+    'learning_rate': 0.5,
+    'epochs': 10,
+    'batch_size': 32
+}
+
+# Luo NeuralNetwork-olio hyperparametreilla
+nn = NeuralNetwork(hyperparameters)
+
+# Lataa aiemmin tallennetut parametrit
 nn.load_parameters('../src/nn_parameters.npz')
 test_accuracy = nn.test_accuracy * 100
 
@@ -74,8 +83,8 @@ def predict():
     """
     random_index = random.randint(0, x_test_data.shape[1] - 1)
     input_image = x_test_data[:, random_index].reshape(784, 1)
-    _, _, prediction = nn.forward_propagation(input_image)
-    predicted_class = np.argmax(prediction, axis=0)
+    activations = nn.forward_propagation(input_image)
+    predicted_class = np.argmax(activations['a2'], axis=0)
     true_label = y_test_data[random_index]
     result = {
         'true_label': int(true_label),
