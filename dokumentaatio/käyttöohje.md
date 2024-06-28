@@ -46,6 +46,13 @@ python3 app.py
 
 ### 7. Aja testit
 
+Suorita testit komennolla
+
 ```bash
 pytest
 ```
+Aja testikattavuusraportti komennolla
+```bash
+coverage report -m --include=src/nn.py
+```
+

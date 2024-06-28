@@ -2,7 +2,7 @@
 
 ### Yksikkötestit
 
-Yksikkötesteissä käytetään unittest-kirjastoa. Automaattisilla testeillä testataan src/nn.py. Käyttöliittymän koodi on jätetty testien ulkopuolelle. Testikattavuus on tällä hetkellä 90%, kattaen main-funktiota lukuunottamatta muut funktiot.  
+Yksikkötesteissä käytetään unittest-kirjastoa. Automaattisilla testeillä testataan src/nn.py. Käyttöliittymän koodi on jätetty testien ulkopuolelle. Testikattavuus on 100% kattaen aktivaatiofunktioita ja main-funktiota lukuunottamatta muut funktiot.  
 
 ![Kattavuusraportti](coverage_report.png)
 
@@ -29,4 +29,18 @@ Tämä osoittaa deterministisen datan käsittelyn.
 
 ### Neuroverkon tarkkuus
 
-Neuroverkon tarkkuus tämänhetkisellä arkkitehtuurilla on noin 96-97%. Piilokerroksen neuronien määrää kasvattamalla olen saanut tarkkuuden nousemaan 98%:in. Saavutettu tarkkuus viittaa siihen, että neuroverkossa tapahtuu oikeita asioita.
+Neuroverkon tarkkuus tämänhetkisellä arkkitehtuurilla (input-kerros 748 neuronia, piilokerros 30 neuronia ja output-kerros 10 neuronia) on noin 96-97%. Piilokerroksen neuronien määrää kasvattamalla olen saanut tarkkuuden nousemaan 98%:in. Saavutettu luokittelutarkkuus viittaa siihen, että neuroverkossa tapahtuu oikeita asioita.
+
+
+### Testien toistaminen
+
+Testit voi suorittaa projektin juurikansiossa komennolla
+
+```bash
+pytest
+```
+
+Aja testikattavuusraportti komennolla
+```bash
+coverage report -m --include=src/nn.py
+```
