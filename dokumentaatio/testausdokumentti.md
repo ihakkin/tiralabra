@@ -27,9 +27,11 @@ Testin läpäisee, mikäli luokittelutulos on sama syötedatan järjestyksestä 
 Tämä osoittaa deterministisen datan käsittelyn.
 
 
-### Neuroverkon tarkkuus
+### Neuroverkon luokittelutarkkuus
 
-Neuroverkon tarkkuus tämänhetkisellä arkkitehtuurilla (input-kerros 748 neuronia, piilokerros 30 neuronia ja output-kerros 10 neuronia) on noin 96-97%. Piilokerroksen neuronien määrää kasvattamalla olen saanut tarkkuuden nousemaan 98%:in. Saavutettu luokittelutarkkuus viittaa siihen, että neuroverkossa tapahtuu oikeita asioita.
+Neuroverkon tarkkuus tämänhetkisellä arkkitehtuurilla (input-kerros 748 neuronia, piilokerros 30 neuronia ja output-kerros 10 neuronia) on noin 96-97%. Piilokerroksen neuronien määrää kasvattamalla tarkkuus nousee 98%:in. Saavutettu luokittelutarkkuus viittaa siihen, että neuroverkossa tapahtuu oikeita asioita.
+
+![Luokittelutarkkuus](test_accuracy.png)
 
 
 ### Testien toistaminen
