@@ -15,19 +15,20 @@ matplotlib.use('Agg')
 
 app = Flask(__name__, template_folder='templates')
 
-# Määrittele hyperparametrit
-hyperparameters = {
-    'hidden_size': 30,
-    'learning_rate': 0.5,
-    'epochs': 10,
-    'batch_size': 32
-}
+def load_hyperparameters(filename):
+    data = np.load(filename)
+    hyperparameters = {
+        'hidden_size': data['hidden_size'],
+        'learning_rate': data['learning_rate'],
+        'epochs': data['epochs'],
+        'batch_size': data['batch_size']
+    }
+    return hyperparameters
 
-# Luo NeuralNetwork-olio hyperparametreilla
+param_file = '../src/nn_parameters.npz'
+hyperparameters = load_hyperparameters(param_file)
 nn = NeuralNetwork(hyperparameters)
-
-# Lataa aiemmin tallennetut parametrit
-nn.load_parameters('../src/nn_parameters.npz')
+nn.load_parameters(param_file)
 test_accuracy = nn.test_accuracy * 100
 
 def load_data(sample_size=1000):
@@ -82,8 +83,8 @@ def predict():
     """
     random_index = random.randint(0, x_test_data.shape[1] - 1)
     input_image = x_test_data[:, random_index].reshape(784, 1)
-    activations, _ = nn.forward_propagation(input_image)
-    predicted_class = np.argmax(activations['a2'], axis=0)
+    _, a2, _ = nn.forward_propagation(input_image)
+    predicted_class = np.argmax(a2, axis=0)
     true_label = y_test_data[random_index]
     result = {
         'true_label': int(true_label),

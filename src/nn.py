@@ -49,10 +49,9 @@ class NeuralNetwork:
     Neuroverkko-luokka.
 
     Attributes:
-        parameters: Sanakirja, joka sisältää verkon painot ja biasit.
-        hyperparameters: Sanakirja, joka sisältää säädettävät hyperparametrit (hidden_size, learning_rate,
-                epochs, batch_size).
-        test_accuracy: testiaineistosta tehtävän luokittelun tarkkuus.
+        w1, b1, w2, b2: Painot ja biasit.
+        hidden_size, learning_rate, epochs, batch_size: Säädettävät hyperparametrit.
+        test_accuracy: Testiaineistosta tehtävän luokittelun tarkkuus.
     """
 
     def __init__(self, hyperparameters):
@@ -62,109 +61,114 @@ class NeuralNetwork:
         Args:
             hyperparameters: Sanakirja, joka sisältää säädettävät hyperparametrit.
                 hidden_size (int): Piilokerroksen neuronien määrä.
-                learning_rate (float): Kuinka suuria askelia otetaan gradientin vastavektorin suuntaan.
+                learning_rate (float): Oppimisnopeus vaikuttaa siihen, kuinka suuria askelia
+                                       otetaan gradientin vastavektorin suuntaan.
                 epochs (int): Kuinka monta kertaa koulutusdata käydään läpi.
                 batch_size (int): Minibatchien koko.
 
         Attributes:
-            parameters (dict): Sanakirja, joka sisältää verkon painot ja biasit.
+            w1, b1, w2, b2: Painot ja biasit.
             test_accuracy (float): Testiaineistosta tehtävän luokittelun tarkkuus, aluksi None.
         """
-        self.hyperparameters = hyperparameters
+        self.hidden_size = hyperparameters['hidden_size']
+        self.learning_rate = hyperparameters['learning_rate']
+        self.epochs = hyperparameters['epochs']
+        self.batch_size = hyperparameters['batch_size']
         self.test_accuracy = None
-        self.parameters = self.initialize_parameters()
+        self.w1, self.b1, self.w2, self.b2 = self.initialize_parameters()
 
     def initialize_parameters(self):
         """
-        Alustaa neuroverkon kerrokset sekä painot ja biasit.
+        Alustaa neuroverkon kerrokset sekä parametrit.
+        Painot ja biasit alustetaan satunnaisesti normaalijakauman arvoilla (keskiarvo 0,
+        keskihajonta 1). Arvot skaalattu 0.1:llä, mikä vähentää suurten lukujen vaikutusta ja
+        vakauttaa oppimista
 
         Returns:
-            parameters: Sanakirja, joka sisältää painot ja biasit.
+            w1, b1, w2, b2: Painot ja biasit.
         """
         input_size = 784
-        hidden_size = self.hyperparameters['hidden_size']
+        hidden_size = self.hidden_size
         output_size = 10
 
-        # Alustetaan painot ja biasit satunnaisesti normaalijakauman arvoilla (keskiarvo 0, keskihajonta 1)
-        # Arvot skaalattu 0.1:llä, mikä vähentää suurten lukujen vaikutusta ja vakauttaa oppimista
-        parameters = {
-            'w1': np.random.randn(hidden_size, input_size) * 0.1,
-            'b1': np.random.randn(hidden_size, 1) * 0.1,
-            'w2': np.random.randn(output_size, hidden_size) * 0.1,
-            'b2': np.random.randn(output_size, 1) * 0.1,
-        }
-        return parameters
+        w1 = np.random.randn(hidden_size, input_size) * 0.1
+        b1 = np.random.randn(hidden_size, 1) * 0.1
+        w2 = np.random.randn(output_size, hidden_size) * 0.1
+        b2 = np.random.randn(output_size, 1) * 0.1
+        return w1, b1, w2, b2
 
     def forward_propagation(self, x):
         """
-        Suorittaa eteenpäin suuntautuvan laskennan neuroverkossa. Ottaa syötteen input-kerroksessa ja laskee
-        kerroksittain lineaarikombinaatiot ja lähettää ne seuraavaan kerrokseen aktivaation jälkeen.
-        Tuloksia käytetään vasta-virta-algoritmissa ja verkon tarkkuuden evaluaatiossa.
+        Suorittaa eteenpäin suuntautuvan laskennan neuroverkossa. Ottaa syötteen input-kerroksessa
+        ja laskee kerroksittain lineaarikombinaatiot ja lähettää ne seuraavaan kerrokseen
+        aktivaation jälkeen. Tuloksia käytetään vastavirta-algoritmissa ja verkon tarkkuuden
+        evaluaatiossa.
 
         Args:
             x: Syöte arrayna.
 
          Returns:
-            activations: Sanakirja, joka sisältää kerrosten aktivoidut outputit (a1, a2).
-            zs: Sanakirja, joka sisältää z-arvot (z1, z2), eli lineaarikombinaatiot ennen aktivointia.
+            a1, a2: Kerrosten aktivoidut outputit.
+            z1, z2: Kerrosten outputit ennen aktivointia.
         """
-        # Piilokerroksen painomatriisin ja syötteen välinen pistetulo, johon lisätään piilokerroksen bias.
-        z1 = np.dot(self.parameters['w1'], x) + self.parameters['b1']
+        # Piilokerroksen painomatriisin ja syötteen pistetulo, johon lisätään piilokerroksen bias.
+        z1 = np.dot(self.w1, x) + self.b1
         # Lasketaan aktivaatiofunktio piilokerroksen neuroneille.
         a1 = sigmoid(z1)
         # Ulostulokerroksen painomatriisin ja piilokerroksen outputin välinen pistetulo,
         # johon lisätään ulostulokerroksen bias.
-        z2 = np.dot(self.parameters['w2'], a1) + self.parameters['b2']
+        z2 = np.dot(self.w2, a1) + self.b2
         # Lasketaan aktivaatiofunktio ulostulokerroksen neuroneille.
         a2 = softmax(z2)
-        activations = {'a1': a1, 'a2': a2}
-        zs = {'z1': z1, 'z2': z2}
-        return activations, zs
+        return a1, a2, z1
 
-    def backward_propagation(self, x_batch, y_batch, activations, zs):
+    def backward_propagation(self, x_batch, y_batch, a1, a2, z1):
         """
-        Vastavirta-algoritmi sekä painojen ja biasien päivitys.
-        Vastavirta-algoritmi laskee verkon virheen osittaisderivaatat suhteessa painoihin ja vakiotermeihin.
-        Tämä mahdollistaa virhefunktion minimoinnin gradienttimenetelmällä, jossa painot ja biasit päivitetään virheen vähentämiseksi.
-
+        Vastavirta-algoritmi minimoi virhettä eli eroa verkon tekemän ennusteen ja todellisten luokkien
+        välillä. Tavoitteena on löytää minimointia vastaavat painot ja biasit. Algoritmi laskee verkon
+        virheen osittaisderivaatat suhteessa painoihin ja biaseihin. Gradienttimenetelmässä 
+        osittaisderivaatoista koostuvan gradientin perusteella päivitetään uudet parametrien arvot.
 
         Args:
             x_batch: Array, jonka jokainen sarake on yksi koulutusdatan sample.
                     Pilkottu mini-batcheiksi.
             y_batch: Array, jonka arvot kertovat mikä luku kussakin mini-batchin samplessa on.
-            activations: Sanakirja, joka sisältää kerrosten aktivoidut outputit (a1, a2).
-            zs: Sanakirja, joka sisältää z-arvot (z1, z2), eli lineaarikombinaatiot ennen aktivointia.
+            a1, a2: Kerrosten aktivoidut outputit.
+            z1: Piilokerroksen output ennen aktivointia.
         """
         m = x_batch.shape[1]
         # Muutetaan y_batch one hot -muotoon, jossa luokat esitetään binaarisena.
         one_hot_y = np.eye(10)[y_batch].T
 
-        # Lasketaan virhe output-kerroksessa, eli ero ennusteen ja todellisen välillä.
-        delta2 = activations['a2'] - one_hot_y 
+        # Lasketaan virhe output-kerroksessa, eli ero ennusteen ja todellisen luokan välillä.
+        # Hukkafunktiona cross entropy
+        delta2 = a2 - one_hot_y
 
         # Lasketaan gradientit ulostulokerroksen painoille (nabla_w2) ja biaseille (nabla_b2).
-        nabla_w2 = np.dot(delta2, activations['a1'].T) / m 
-        nabla_b2 = np.sum(delta2, axis=1, keepdims=True) / m 
+        nabla_w2 = np.dot(delta2, a1.T) / m
+        nabla_b2 = np.sum(delta2, axis=1, keepdims=True) / m
 
-        # Lasketaan virhe piilokerroksessa (delta1) käyttäen ulostulokerroksen virhettä ja piilokerroksen aktivaatioiden
-        # derivaattaa (sigmoid_prime).
-        delta1 = np.dot(self.parameters['w2'].T, delta2) * sigmoid_prime(zs['z1'])  # Piilokerroksen virhe
+        # Lasketaan virhe piilokerroksessa (delta1) käyttäen ulostulokerroksen virhettä ja
+        # piilokerroksen aktivaatioiden derivaattaa (sigmoid_prime).
+        delta1 = np.dot(self.w2.T, delta2) * sigmoid_prime(z1)
 
         # Lasketaan gradientit piilokerroksen painoille (nabla_w1) ja biaseille (nabla_b1).
-        nabla_w1 = np.dot(delta1, x_batch.T) / m  # Piilokerroksen painojen gradientti
-        nabla_b1 = np.sum(delta1, axis=1, keepdims=True) / m  # Piilokerroksen biasien gradientti
+        nabla_w1 = np.dot(delta1, x_batch.T) / m
+        nabla_b1 = np.sum(delta1, axis=1, keepdims=True) / m
 
-        # Päivitetään painot ja biasit laskettujen gradienttien perusteella käyttäen oppimisnopeutta.
-        self.parameters['w1'] -= self.hyperparameters['learning_rate'] * nabla_w1
-        self.parameters['b1'] -= self.hyperparameters['learning_rate'] * nabla_b1
-        self.parameters['w2'] -= self.hyperparameters['learning_rate'] * nabla_w2
-        self.parameters['b2'] -= self.hyperparameters['learning_rate'] * nabla_b2
+        # Päivitetään painot ja biasit laskettujen gradienttien perusteella.
+        self.w1 -= self.learning_rate * nabla_w1
+        self.b1 -= self.learning_rate * nabla_b1
+        self.w2 -= self.learning_rate * nabla_w2
+        self.b2 -= self.learning_rate * nabla_b2
 
     def train(self, x_train, y_train, x_test, y_test):
         """
-        Kouluttaa neuroverkon. Koulutusdata jaetaan pienempiin eriin, mini-batcheihin, jotka viedään verkon
-        läpi eteenpäin suuntautuvassa laskennassa (forward propagation). Laskettuja arvoja käytetään 
-        vastavirta-algoritmissa, joka 
+        Kouluttaa neuroverkon. Koulutusdata jaetaan satunnaistettuihin alijoukkoihin, "mini-batch",
+        jotka viedään verkon läpi eteenpäin suuntautuvassa laskennassa (forward propagation). Laskettuja
+        arvoja käytetään taaksepäin suuntautuvassa vastavirta-algoritmissa, joka minimoi ennusteen virhettä.
+        Parametrit päivitetään jokaisen mini-batchin ajon jälkeen, eli neuroverkko korjaa itseään.
+        Lopuksi kutsutaan arviointifunktiota testidatalla.
 
         Args:
             x_train: array, jossa koko koulutusdatan syötteet. Jokainen sarake vastaa yhtä syötettä.
@@ -173,17 +177,17 @@ class NeuralNetwork:
             y_test: array, jossa testiaineiston todelliset arvot.
         """
         training_data = list(zip(x_train.T, y_train))
-        for epoch in range(self.hyperparameters['epochs']):
+        for epoch in range(self.epochs):
             random.shuffle(training_data)
             mini_batches = [
-                training_data[k:k + self.hyperparameters['batch_size']]
-                for k in range(0, len(training_data), self.hyperparameters['batch_size'])]
+                training_data[k:k + self.batch_size]
+                for k in range(0, len(training_data), self.batch_size)]
             for mini_batch in mini_batches:
                 x_batch, y_batch = zip(*mini_batch)
                 x_batch = np.array(x_batch).T
                 y_batch = np.array(y_batch)
-                activations, zs = self.forward_propagation(x_batch)
-                self.backward_propagation(x_batch, y_batch, activations, zs)
+                a1, a2, z1 = self.forward_propagation(x_batch)
+                self.backward_propagation(x_batch, y_batch, a1, a2, z1)
             self.test_accuracy = self.evaluate(x_test, y_test)
             print(f"Epoch {epoch + 1}: Test accuracy {self.test_accuracy:.4f}")
 
@@ -198,8 +202,8 @@ class NeuralNetwork:
         Returns:
             Testiaineiston tarkkuus.
         """
-        activations, _ = self.forward_propagation(x_test)
-        predictions = np.argmax(activations['a2'], axis=0)
+        _, a2, _ = self.forward_propagation(x_test)
+        predictions = np.argmax(a2, axis=0)
         return np.mean(predictions == y_test)
 
     def save_parameters(self, filename):
@@ -209,7 +213,9 @@ class NeuralNetwork:
         Args:
             filename: Tiedoston nimi, johon parametrit tallennetaan.
         """
-        np.savez(filename, **self.parameters, test_accuracy=self.test_accuracy)
+        np.savez(filename, w1=self.w1, b1=self.b1, w2=self.w2, b2=self.b2,
+                 test_accuracy=self.test_accuracy, hidden_size=self.hidden_size,
+                 learning_rate=self.learning_rate, epochs=self.epochs, batch_size=self.batch_size)
 
     def load_parameters(self, filename):
         """
@@ -219,13 +225,15 @@ class NeuralNetwork:
             filename: Tiedoston nimi, josta parametrit ladataan.
         """
         data = np.load(filename)
-        self.parameters = {
-            'w1': data['w1'],
-            'b1': data['b1'],
-            'w2': data['w2'],
-            'b2': data['b2']
-        }
+        self.w1 = data['w1']
+        self.b1 = data['b1']
+        self.w2 = data['w2']
+        self.b2 = data['b2']
         self.test_accuracy = data['test_accuracy']
+        self.hidden_size = int(data['hidden_size'])
+        self.learning_rate = float(data['learning_rate'])
+        self.epochs = int(data['epochs'])
+        self.batch_size = int(data['batch_size'])
 
 def preprocess_data(train_file, test_file):
     """

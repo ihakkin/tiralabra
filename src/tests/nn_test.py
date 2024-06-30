@@ -1,20 +1,26 @@
+"""
+Testit NeuralNetwork-luokalle ja siihen liittyville funktioille.
+"""
+
+
 import unittest
+from pathlib import Path
 import pandas as pd
 import numpy as np
-from pathlib import Path
-from src.nn import NeuralNetwork, preprocess_data, softmax, sigmoid, sigmoid_prime
+
+from src.nn import NeuralNetwork, preprocess_data
 
 
 class TestNeuralNetwork(unittest.TestCase):
     def setUp(self):
-        hyperparameters = {
+        self.hyperparameters = {
             'hidden_size': 30,
             'learning_rate': 0.1,
             'epochs': 100,
             'batch_size': 10
         }
 
-        self.nn = NeuralNetwork(hyperparameters)
+        self.nn = NeuralNetwork(self.hyperparameters)
 
         script_dir = Path(__file__).resolve().parent
         data_path = script_dir / '../../data/mnist_train.csv'
@@ -30,58 +36,58 @@ class TestNeuralNetwork(unittest.TestCase):
         self.assertTrue(train_accuracy == 1.0)
 
     def test_weight_changes(self):
-        initial_w1 = self.nn.parameters['w1'].copy()
-        initial_w2 = self.nn.parameters['w2'].copy()
+        initial_w1 = self.nn.w1.copy()
+        initial_w2 = self.nn.w2.copy()
         self.nn.train(self.x_train, self.y_train, self.x_train, self.y_train)
-        self.assertTrue(np.any(self.nn.parameters['w1'] - initial_w1 != 0))
-        self.assertTrue(np.any(self.nn.parameters['w2'] - initial_w2 != 0))
+        self.assertTrue(np.any(self.nn.w1 - initial_w1 != 0))
+        self.assertTrue(np.any(self.nn.w2 - initial_w2 != 0))
 
     def test_bias_changes(self):
-        initial_b1 = self.nn.parameters['b1'].copy()
-        initial_b2 = self.nn.parameters['b2'].copy()
+        initial_b1 = self.nn.b1.copy()
+        initial_b2 = self.nn.b2.copy()
         self.nn.train(self.x_train, self.y_train, self.x_train, self.y_train)
-        self.assertTrue(np.any(self.nn.parameters['b1'] - initial_b1 != 0))
-        self.assertTrue(np.any(self.nn.parameters['b2'] - initial_b2 != 0))
+        self.assertTrue(np.any(self.nn.b1 - initial_b1 != 0))
+        self.assertTrue(np.any(self.nn.b2 - initial_b2 != 0))
 
     def test_shuffled_minibatch(self):
-        activations_initial, _ = self.nn.forward_propagation(self.x_train)
+        a1_initial, a2_initial, _ = self.nn.forward_propagation(self.x_train)
         shuffled_indices = np.random.permutation(self.x_train.shape[1])
         x_shuffled = self.x_train[:, shuffled_indices]
-        activations_shuffled, _ = self.nn.forward_propagation(x_shuffled)
+        a1_shuffled, a2_shuffled, _ = self.nn.forward_propagation(x_shuffled)
         for i in range(self.x_train.shape[1]):
             initial_index = shuffled_indices[i]
-            self.assertTrue(np.allclose(activations_shuffled['a2'][:, i], activations_initial['a2'][:, initial_index], atol=1e-6))
+            self.assertTrue(np.allclose(a2_shuffled[:, i], a2_initial[:, initial_index], atol=1e-6))
 
     def test_invalid_input_shape(self):
         invalid_input = np.random.randn(785, 1)
         self.assertRaises(ValueError, self.nn.forward_propagation, invalid_input)
 
     def test_initialization(self):
-        self.assertEqual(self.nn.hyperparameters['hidden_size'], 30)
-        self.assertEqual(self.nn.hyperparameters['learning_rate'], 0.1)
-        self.assertEqual(self.nn.hyperparameters['epochs'], 100)
-        self.assertEqual(self.nn.hyperparameters['batch_size'], 10)
-        self.assertEqual(self.nn.parameters['w1'].shape, (30, 784))
-        self.assertEqual(self.nn.parameters['b1'].shape, (30, 1))
-        self.assertEqual(self.nn.parameters['w2'].shape, (10, 30))
-        self.assertEqual(self.nn.parameters['b2'].shape, (10, 1))
+        self.assertEqual(self.nn.hidden_size, 30)
+        self.assertEqual(self.nn.learning_rate, 0.1)
+        self.assertEqual(self.nn.epochs, 100)
+        self.assertEqual(self.nn.batch_size, 10)
+        self.assertEqual(self.nn.w1.shape, (30, 784))
+        self.assertEqual(self.nn.b1.shape, (30, 1))
+        self.assertEqual(self.nn.w2.shape, (10, 30))
+        self.assertEqual(self.nn.b2.shape, (10, 1))
         self.assertIsNone(self.nn.test_accuracy)
 
     def test_save_load_parameters(self):
         self.nn.train(self.x_train, self.y_train, self.x_train, self.y_train)
         self.nn.save_parameters('test_params.npz')
-        nn2 = NeuralNetwork(self.nn.hyperparameters)
+        nn2 = NeuralNetwork(self.hyperparameters)
         nn2.load_parameters('test_params.npz')
-        self.assertTrue(np.array_equal(self.nn.parameters['w1'], nn2.parameters['w1']))
-        self.assertTrue(np.array_equal(self.nn.parameters['b1'], nn2.parameters['b1']))
-        self.assertTrue(np.array_equal(self.nn.parameters['w2'], nn2.parameters['w2']))
-        self.assertTrue(np.array_equal(self.nn.parameters['b2'], nn2.parameters['b2']))
+        self.assertTrue(np.array_equal(self.nn.w1, nn2.w1))
+        self.assertTrue(np.array_equal(self.nn.b1, nn2.b1))
+        self.assertTrue(np.array_equal(self.nn.w2, nn2.w2))
+        self.assertTrue(np.array_equal(self.nn.b2, nn2.b2))
         self.assertEqual(self.nn.test_accuracy, nn2.test_accuracy)
         Path('test_params.npz').unlink()
 
     def test_load_parameters_file_not_found(self):
         self.assertRaises(FileNotFoundError, self.nn.load_parameters, 'ghost.npz')
-    
+
     def test_preprocess_data(self):
         script_dir = Path(__file__).resolve().parent
         train_data_path = script_dir / '../../data/mnist_train.csv'
