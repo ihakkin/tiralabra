@@ -15,19 +15,30 @@ matplotlib.use('Agg')
 
 app = Flask(__name__, template_folder='templates')
 
-def load_hyperparameters(filename):
+def load_nn_parameters(filename):
+    """
+    Lataa neuroverkon parametrit tiedostosta.
+
+    Args:
+        filename: Tiedoston nimi, josta parametrit ladataan.
+
+    Returns:
+        Dict, joka sisältää neuroverkon parametrit.
+    """
     data = np.load(filename)
-    hyperparameters = {
-        'hidden_size': data['hidden_size'],
-        'learning_rate': data['learning_rate'],
-        'epochs': data['epochs'],
-        'batch_size': data['batch_size']
+    params = {
+        'input_size': int(data['input_size']),
+        'hidden_size': int(data['hidden_size']),
+        'output_size': int(data['output_size']),
+        'learning_rate': float(data['learning_rate']),
+        'epochs': int(data['epochs']),
+        'batch_size': int(data['batch_size'])
     }
-    return hyperparameters
+    return params
 
 param_file = '../src/nn_parameters.npz'
-hyperparameters = load_hyperparameters(param_file)
-nn = NeuralNetwork(hyperparameters)
+nn_params = load_nn_parameters(param_file)
+nn = NeuralNetwork(**nn_params)
 nn.load_parameters(param_file)
 test_accuracy = nn.test_accuracy * 100
 

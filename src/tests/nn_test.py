@@ -2,25 +2,23 @@
 Testit NeuralNetwork-luokalle ja siihen liittyville funktioille.
 """
 
-
 import unittest
 from pathlib import Path
 import pandas as pd
 import numpy as np
-
 from src.nn import NeuralNetwork, preprocess_data
-
 
 class TestNeuralNetwork(unittest.TestCase):
     def setUp(self):
-        self.hyperparameters = {
-            'hidden_size': 30,
-            'learning_rate': 0.1,
-            'epochs': 100,
-            'batch_size': 10
-        }
+        self.input_size = 784
+        self.hidden_size = 30
+        self.output_size = 10
+        self.learning_rate = 0.1
+        self.epochs = 100
+        self.batch_size = 10
 
-        self.nn = NeuralNetwork(self.hyperparameters)
+        self.nn = NeuralNetwork(self.input_size, self.hidden_size, self.output_size,
+                                self.learning_rate, self.epochs, self.batch_size)
 
         script_dir = Path(__file__).resolve().parent
         data_path = script_dir / '../../data/mnist_train.csv'
@@ -50,33 +48,36 @@ class TestNeuralNetwork(unittest.TestCase):
         self.assertTrue(np.any(self.nn.b2 - initial_b2 != 0))
 
     def test_shuffled_minibatch(self):
-        a1_initial, a2_initial, _ = self.nn.forward_propagation(self.x_train)
+        _, a2_initial, _ = self.nn.forward_propagation(self.x_train)
         shuffled_indices = np.random.permutation(self.x_train.shape[1])
         x_shuffled = self.x_train[:, shuffled_indices]
-        a1_shuffled, a2_shuffled, _ = self.nn.forward_propagation(x_shuffled)
+        _, a2_shuffled, _ = self.nn.forward_propagation(x_shuffled)
         for i in range(self.x_train.shape[1]):
             initial_index = shuffled_indices[i]
             self.assertTrue(np.allclose(a2_shuffled[:, i], a2_initial[:, initial_index], atol=1e-6))
 
     def test_invalid_input_shape(self):
-        invalid_input = np.random.randn(785, 1)
+        invalid_input = np.random.randn(self.input_size + 1, 1)
         self.assertRaises(ValueError, self.nn.forward_propagation, invalid_input)
 
     def test_initialization(self):
-        self.assertEqual(self.nn.hidden_size, 30)
-        self.assertEqual(self.nn.learning_rate, 0.1)
-        self.assertEqual(self.nn.epochs, 100)
-        self.assertEqual(self.nn.batch_size, 10)
-        self.assertEqual(self.nn.w1.shape, (30, 784))
-        self.assertEqual(self.nn.b1.shape, (30, 1))
-        self.assertEqual(self.nn.w2.shape, (10, 30))
-        self.assertEqual(self.nn.b2.shape, (10, 1))
+        self.assertEqual(self.nn.input_size, self.input_size)
+        self.assertEqual(self.nn.hidden_size, self.hidden_size)
+        self.assertEqual(self.nn.output_size, self.output_size)
+        self.assertEqual(self.nn.learning_rate, self.learning_rate)
+        self.assertEqual(self.nn.epochs, self.epochs)
+        self.assertEqual(self.nn.batch_size, self.batch_size)
+        self.assertEqual(self.nn.w1.shape, (self.hidden_size, self.input_size))
+        self.assertEqual(self.nn.b1.shape, (self.hidden_size, 1))
+        self.assertEqual(self.nn.w2.shape, (self.output_size, self.hidden_size))
+        self.assertEqual(self.nn.b2.shape, (self.output_size, 1))
         self.assertIsNone(self.nn.test_accuracy)
 
     def test_save_load_parameters(self):
         self.nn.train(self.x_train, self.y_train, self.x_train, self.y_train)
         self.nn.save_parameters('test_params.npz')
-        nn2 = NeuralNetwork(self.hyperparameters)
+        nn2 = NeuralNetwork(self.input_size, self.hidden_size, self.output_size,
+                            self.learning_rate, self.epochs, self.batch_size)
         nn2.load_parameters('test_params.npz')
         self.assertTrue(np.array_equal(self.nn.w1, nn2.w1))
         self.assertTrue(np.array_equal(self.nn.b1, nn2.b1))
@@ -98,3 +99,4 @@ class TestNeuralNetwork(unittest.TestCase):
         self.assertEqual(x_test.shape[0], 784)
         self.assertEqual(len(y_train), x_train.shape[1])
         self.assertEqual(len(y_test), x_test.shape[1])
+        
