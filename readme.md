@@ -1,6 +1,6 @@
 # Tiralabra: Neuroverkko
 
-Harjoitustyön aiheena on MNIST-tietokannan käsinkirjoitettujen numeroiden tunnistus neuroverkon avulla. Projektilla on yksinkertainen graafinen käyttöliittymä, jossa käyttäjä voi testata neuroverkon luokittelun onnistumista pienemmällä, randomisoidulla testidatasetillä. Neuroverkon tarkkuus on tällä hetkellä n. 95%.
+Harjoitustyön aiheena on MNIST-tietokannan käsinkirjoitettujen numeroiden tunnistus neuroverkon avulla. Projektilla on yksinkertainen graafinen käyttöliittymä, jossa käyttäjä voi testata neuroverkon luokittelun onnistumista 1000 näytteen randomisoidulla testidatasetillä. Neuroverkon luokittelutarkkuus on tällä hetkellä n. 97%.
 
 ## Asennusohjeet
 
@@ -51,5 +51,5 @@ python3 app.py
 ### 7. Aja testit
 
 ```bash
-pytest
+coverage run -m pytest
 ```

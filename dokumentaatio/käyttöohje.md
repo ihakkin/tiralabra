@@ -49,10 +49,10 @@ python3 app.py
 Suorita testit komennolla
 
 ```bash
-pytest
+coverage run -m pytest
 ```
 Aja testikattavuusraportti komennolla
 ```bash
-coverage report -m --include=src/nn.py
+coverage report
 ```
 
