@@ -285,4 +285,4 @@ def main(hidden_size, learning_rate, epochs, batch_size):
     print(f"Saved test accuracy: {test_accuracy:.4f}")
 
 if __name__ == "__main__":
-    main(hidden_size=30, learning_rate=0.5, epochs=10, batch_size=32)
+    main(hidden_size=60, learning_rate=0.2, epochs=20, batch_size=32)
